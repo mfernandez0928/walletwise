@@ -95,7 +95,7 @@ class _DashboardPage extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -112,7 +112,7 @@ class _DashboardPage extends StatelessWidget {
                         '₱ ${accountProvider.totalBalance.toStringAsFixed(2)}',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 32,
+                          fontSize: 48, // Increased from 32
                           fontWeight: FontWeight.bold,
                         ),
                       ),

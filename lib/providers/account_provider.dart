@@ -223,9 +223,9 @@ class CurrencyConverter {
     final fromRate = exchangeRates[fromCurrency] ?? 1.0;
     final toRate = exchangeRates[toCurrency] ?? 1.0;
 
-    // Convert from source to base, then to target
-    final inBase = amount / fromRate;
-    final inTarget = inBase * toRate;
+    // Convert from source to base (PHP), then to target
+    final inBase = amount * fromRate; // amount in EUR × rate = PHP
+    final inTarget = inBase / toRate; // PHP / target rate = target currency
 
     return inTarget;
   }
