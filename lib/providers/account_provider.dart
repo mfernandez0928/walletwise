@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/account_model.dart';
 import '../constants/account_types.dart';
+import '../services/currency_service.dart';
 
 class AccountProvider extends ChangeNotifier {
   late Box<Map> _accountsBox;
@@ -12,11 +13,13 @@ class AccountProvider extends ChangeNotifier {
   // Filter and visibility states
   String _activeFilter = 'All';
   bool _showAmounts = true;
+  bool _isInitialized = false;
 
   List<Account> get accounts => _accounts;
   String get baseCurrency => _baseCurrency;
   String get activeFilter => _activeFilter;
   bool get showAmounts => _showAmounts;
+  bool get isInitialized => _isInitialized;
 
   double get totalBalance {
     return CurrencyConverter.getTotalBalance(
@@ -25,7 +28,7 @@ class AccountProvider extends ChangeNotifier {
     );
   }
 
-  double get totalNetWorth => totalBalance; // Alias
+  double get totalNetWorth => totalBalance;
 
   List<Account> get filteredAccounts {
     if (_activeFilter == 'All') {
@@ -40,23 +43,43 @@ class AccountProvider extends ChangeNotifier {
     _initializeBox();
   }
 
+  // Call this after Firebase/Hive are initialized
+  Future<void> init() async {
+    await _initializeBox();
+  }
+
   Future<void> _initializeBox() async {
     try {
+      print('Opening Hive box for accounts...');
       _accountsBox = await Hive.openBox<Map>('accounts');
+      print('Hive box opened successfully');
+
       await _loadAccounts();
+      _isInitialized = true;
+      notifyListeners();
     } catch (e) {
       print('Error initializing accounts box: $e');
+      _isInitialized = false;
     }
   }
 
   Future<void> _loadAccounts() async {
     try {
+      print('Loading accounts from Hive...');
+      print('Box has ${_accountsBox.length} items');
+
       _accounts = _accountsBox.values
           .map((item) => Account.fromMap(item.cast<String, dynamic>()))
           .toList();
+
+      print('✓ Loaded ${_accounts.length} accounts');
+      for (var account in _accounts) {
+        print('  - ${account.name} (${account.currency}): ${account.balance}');
+      }
+
       notifyListeners();
     } catch (e) {
-      print('Error loading accounts: $e');
+      print('✗ Error loading accounts: $e');
     }
   }
 
@@ -92,11 +115,13 @@ class AccountProvider extends ChangeNotifier {
         interestRate: interestRate,
       );
 
+      print('Adding account: ${account.name}');
       await _accountsBox.put(account.id, account.toMap());
       _accounts.add(account);
+      print('✓ Account added successfully');
       notifyListeners();
     } catch (e) {
-      print('Error adding account: $e');
+      print('✗ Error adding account: $e');
     }
   }
 
@@ -195,24 +220,44 @@ class AccountProvider extends ChangeNotifier {
   }
 }
 
-/// Currency Converter Utility
+/// Updated Currency Converter with dynamic rates
 class CurrencyConverter {
-  // Exchange rates (Base: PHP = 1.0)
-  static const Map<String, double> exchangeRates = {
+  static Map<String, double> _exchangeRates = {
     'PHP': 1.0,
-    'USD': 55.0, // 1 USD = 55 PHP
-    'EUR': 60.0, // 1 EUR = 60 PHP
-    'GBP': 70.0, // 1 GBP = 70 PHP
-    'JPY': 0.37, // 1 JPY = 0.37 PHP
-    'CNY': 7.5, // 1 CNY = 7.5 PHP
-    'INR': 0.65, // 1 INR = 0.65 PHP
-    'THB': 1.5, // 1 THB = 1.5 PHP
-    'SGD': 40.0, // 1 SGD = 40 PHP
-    'MYR': 12.0, // 1 MYR = 12 PHP
-    'IDR': 0.0035, // 1 IDR = 0.0035 PHP
+    'USD': 55.0,
+    'EUR': 60.0,
+    'GBP': 70.0,
+    'JPY': 0.37,
+    'CNY': 7.5,
+    'INR': 0.65,
+    'THB': 1.5,
+    'SGD': 40.0,
+    'MYR': 12.0,
+    'IDR': 0.0035,
   };
 
-  /// Convert amount from one currency to another
+  /// Initialize with real-time rates (call this on app startup)
+  static Future<void> initialize() async {
+    try {
+      print('Initializing CurrencyConverter...');
+      _exchangeRates = await CurrencyService.fetchExchangeRates();
+      print('✓ Exchange rates loaded: $_exchangeRates');
+    } catch (e) {
+      print('✗ Error loading exchange rates: $e');
+    }
+  }
+
+  /// Update rates (for manual refresh)
+  static Future<void> updateRates() async {
+    try {
+      await CurrencyService.refreshRates();
+      _exchangeRates = await CurrencyService.fetchExchangeRates();
+      print('✓ Exchange rates refreshed');
+    } catch (e) {
+      print('✗ Error refreshing rates: $e');
+    }
+  }
+
   static double convert({
     required double amount,
     required String fromCurrency,
@@ -220,17 +265,16 @@ class CurrencyConverter {
   }) {
     if (fromCurrency == toCurrency) return amount;
 
-    final fromRate = exchangeRates[fromCurrency] ?? 1.0;
-    final toRate = exchangeRates[toCurrency] ?? 1.0;
+    final fromRate = _exchangeRates[fromCurrency] ?? 1.0;
+    final toRate = _exchangeRates[toCurrency] ?? 1.0;
 
     // Convert from source to base (PHP), then to target
-    final inBase = amount * fromRate; // amount in EUR × rate = PHP
-    final inTarget = inBase / toRate; // PHP / target rate = target currency
+    final inBase = amount * fromRate;
+    final inTarget = inBase / toRate;
 
     return inTarget;
   }
 
-  /// Get total balance of all accounts in target currency
   static double getTotalBalance({
     required List<Account> accounts,
     required String targetCurrency,
@@ -248,13 +292,11 @@ class CurrencyConverter {
     return total;
   }
 
-  /// Format currency amount
   static String format(double amount, String currency) {
     final symbol = getCurrencySymbol(currency);
     return '$symbol ${amount.toStringAsFixed(2)}';
   }
 
-  /// Get currency symbol
   static String getCurrencySymbol(String currency) {
     const symbols = {
       'PHP': '₱',

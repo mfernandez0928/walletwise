@@ -64,8 +64,50 @@ class _DashboardPage extends StatelessWidget {
         title: const Text('Dashboard'),
         elevation: 0,
         actions: [
+          // Refresh exchange rates button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh exchange rates',
+            onPressed: () async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Updating exchange rates...'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+
+              try {
+                await CurrencyConverter.updateRates();
+
+                // Notify listeners to refresh UI
+                if (context.mounted) {
+                  context.read<AccountProvider>().notifyListeners();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✓ Exchange rates updated!'),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating rates: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+
+          // Logout button
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () {
               context.read<AuthProvider>().logout();
               Navigator.of(context).pushNamedAndRemoveUntil(
@@ -94,6 +136,13 @@ class _DashboardPage extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
                   ),
                   padding: const EdgeInsets.all(32),
                   child: Column(
@@ -105,6 +154,7 @@ class _DashboardPage extends StatelessWidget {
                           color: Colors.white70,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -112,8 +162,9 @@ class _DashboardPage extends StatelessWidget {
                         '₱ ${accountProvider.totalBalance.toStringAsFixed(2)}',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 48, // Increased from 32
+                          fontSize: 48,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: -1,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -163,10 +214,6 @@ class _DashboardPage extends StatelessWidget {
               },
             ),
             const SizedBox(height: 24),
-
-            // Account Breakdown (if you have this widget)
-            // const AccountSummary(),
-            // const SizedBox(height: 24),
 
             // Recent Accounts with Currency Display
             Consumer<AccountProvider>(

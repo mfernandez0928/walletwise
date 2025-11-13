@@ -16,13 +16,16 @@ import 'screens/dashboard/dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
+  // 1. Initialize Hive FIRST
   await Hive.initFlutter();
 
-  // Firebase initialization (optional - can comment out)
+  // 2. Initialize Firebase SECOND
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // 3. Initialize Currency Converter with real-time rates THIRD
+  await CurrencyConverter.initialize();
 
   runApp(const WalletWiseApp());
 }
@@ -35,7 +38,10 @@ class WalletWiseApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => AccountProvider()),
+        ChangeNotifierProvider(
+          create: (_) =>
+              AccountProvider()..init(), // Initialize accounts after app starts
+        ),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
