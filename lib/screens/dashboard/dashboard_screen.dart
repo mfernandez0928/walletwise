@@ -68,6 +68,10 @@ class _DashboardPage extends StatelessWidget {
             icon: const Icon(Icons.logout),
             onPressed: () {
               context.read<AuthProvider>().logout();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/login',
+                (route) => false,
+              );
             },
           ),
         ],
@@ -76,8 +80,55 @@ class _DashboardPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Net Worth Card
-            const NetWorthCard(),
+            // Net Worth Card (Total Balance with Currency Conversion)
+            Consumer<AccountProvider>(
+              builder: (context, accountProvider, _) {
+                return Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withOpacity(0.7)
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Total Balance',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '₱ ${accountProvider.totalBalance.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '${accountProvider.accounts.length} accounts • Base: ${accountProvider.baseCurrency}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 24),
 
             // Quick Stats
@@ -87,7 +138,7 @@ class _DashboardPage extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _StatCard(
-                        label: 'Accounts',
+                        label: 'Total Accounts',
                         value: accountProvider.accounts.length.toString(),
                         icon: '🏦',
                         color: Colors.blue,
@@ -98,7 +149,7 @@ class _DashboardPage extends StatelessWidget {
                       child: Consumer<ExpenseProvider>(
                         builder: (context, expenseProvider, _) {
                           return _StatCard(
-                            label: 'Monthly',
+                            label: 'Monthly Expenses',
                             value:
                                 '₱${expenseProvider.monthlyTotal.toStringAsFixed(0)}',
                             icon: '💸',
@@ -113,32 +164,63 @@ class _DashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Account Breakdown
-            const AccountSummary(),
-            const SizedBox(height: 24),
+            // Account Breakdown (if you have this widget)
+            // const AccountSummary(),
+            // const SizedBox(height: 24),
 
-            // Recent Accounts
+            // Recent Accounts with Currency Display
             Consumer<AccountProvider>(
               builder: (context, accountProvider, _) {
-                final recent = accountProvider.accounts.take(3).toList();
+                final recent = accountProvider.accounts.take(5).toList();
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Recent Accounts',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Recent Accounts',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (recent.length > 3)
+                          TextButton(
+                            onPressed: () {
+                              // Navigate to accounts screen
+                            },
+                            child: const Text('View All'),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     if (recent.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Center(
-                          child: Text(
-                            'No accounts yet. Add one to get started!',
-                            style: TextStyle(color: AppColors.textSecondary),
+                          child: Column(
+                            children: [
+                              const Text(
+                                '📭',
+                                style: TextStyle(fontSize: 32),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'No accounts yet',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const Text(
+                                'Add your first account to get started',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       )
@@ -150,40 +232,94 @@ class _DashboardPage extends StatelessWidget {
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final account = recent[index];
+                          // Convert account balance to PHP for comparison
+                          final balanceInPHP = CurrencyConverter.convert(
+                            amount: account.balance,
+                            fromCurrency: account.currency,
+                            toCurrency: 'PHP',
+                          );
+
                           return Container(
                             decoration: BoxDecoration(
                               color: AppColors.cardBg,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: AppColors.border),
                             ),
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        account.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        account.bankName,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade200,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              account.currency,
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            '≈ ₱${balanceInPHP.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
                                 Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      account.name,
+                                      '${account.currencySymbol}${account.balance.toStringAsFixed(2)}',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
+                                        fontSize: 16,
                                       ),
                                     ),
-                                    Text(
-                                      account.bankName,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary,
+                                    const SizedBox(height: 4),
+                                    if (account.emoji != null)
+                                      Text(
+                                        account.emoji!,
+                                        style: const TextStyle(fontSize: 18),
                                       ),
-                                    ),
                                   ],
-                                ),
-                                Text(
-                                  '${account.currencySymbol}${account.balance.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
                                 ),
                               ],
                             ),

@@ -83,6 +83,20 @@ class Account {
     );
   }
 
+  /// Convert this account's balance to another currency
+  double convertTo(String targetCurrency) {
+    return CurrencyConverter.convert(
+      amount: balance,
+      fromCurrency: currency,
+      toCurrency: targetCurrency,
+    );
+  }
+
+  /// Format balance with currency symbol
+  String formatBalance() {
+    return '$currencySymbol ${balance.toStringAsFixed(2)}';
+  }
+
   Account copyWith({
     String? name,
     double? balance,
@@ -105,5 +119,83 @@ class Account {
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
+  }
+}
+
+/// Currency Converter Utility
+class CurrencyConverter {
+  // Exchange rates (Base: PHP = 1.0)
+  static const Map<String, double> exchangeRates = {
+    'PHP': 1.0,
+    'USD': 55.0, // 1 USD = 55 PHP
+    'EUR': 60.0, // 1 EUR = 60 PHP
+    'GBP': 70.0, // 1 GBP = 70 PHP
+    'JPY': 0.37, // 1 JPY = 0.37 PHP
+    'CNY': 7.5, // 1 CNY = 7.5 PHP
+    'INR': 0.65, // 1 INR = 0.65 PHP
+    'THB': 1.5, // 1 THB = 1.5 PHP
+    'SGD': 40.0, // 1 SGD = 40 PHP
+    'MYR': 12.0, // 1 MYR = 12 PHP
+    'IDR': 0.0035, // 1 IDR = 0.0035 PHP
+  };
+
+  /// Convert amount from one currency to another
+  static double convert({
+    required double amount,
+    required String fromCurrency,
+    required String toCurrency,
+  }) {
+    if (fromCurrency == toCurrency) return amount;
+
+    final fromRate = exchangeRates[fromCurrency] ?? 1.0;
+    final toRate = exchangeRates[toCurrency] ?? 1.0;
+
+    // Convert from source to PHP (base), then to target
+    final inBase = amount / fromRate;
+    final inTarget = inBase * toRate;
+
+    return inTarget;
+  }
+
+  /// Get total balance of all accounts in a target currency
+  static double getTotalBalance({
+    required List<Account> accounts,
+    required String targetCurrency,
+  }) {
+    double total = 0;
+
+    for (var account in accounts) {
+      total += convert(
+        amount: account.balance,
+        fromCurrency: account.currency,
+        toCurrency: targetCurrency,
+      );
+    }
+
+    return total;
+  }
+
+  /// Format currency amount
+  static String format(double amount, String currency) {
+    final symbol = getCurrencySymbol(currency);
+    return '$symbol ${amount.toStringAsFixed(2)}';
+  }
+
+  /// Get currency symbol
+  static String getCurrencySymbol(String currency) {
+    const symbols = {
+      'PHP': '₱',
+      'USD': '\$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥',
+      'CNY': '¥',
+      'INR': '₹',
+      'THB': '฿',
+      'SGD': 'S\$',
+      'MYR': 'RM',
+      'IDR': 'Rp',
+    };
+    return symbols[currency] ?? currency;
   }
 }

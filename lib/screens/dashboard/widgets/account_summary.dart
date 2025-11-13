@@ -52,7 +52,9 @@ class AccountSummary extends StatelessWidget {
                   itemCount: AccountType.values.length,
                   itemBuilder: (context, index) {
                     final type = AccountType.values[index];
-                    final accounts = accountProvider.getAccountsByType(type);
+                    final typeString = type.toString().split('.').last;
+                    final accounts =
+                        accountProvider.getAccountsByType(typeString);
                     final total = accounts.fold<double>(
                       0,
                       (sum, acc) => sum + acc.balance,

@@ -31,7 +31,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     super.dispose();
   }
 
-  void _handleAddAccount() {
+  void _handleAddAccount() async {
     if (_nameController.text.isEmpty ||
         _selectedCountry == null ||
         _selectedBank == null ||
@@ -65,7 +65,18 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       emoji: _selectedEmoji,
     );
 
-    context.read<AccountProvider>().addAccount(account);
+    await context.read<AccountProvider>().addAccount(
+          name: account.name,
+          balance: account.balance,
+          currency: account.currency,
+          currencySymbol: account.currencySymbol,
+          countryCode: account.countryCode,
+          bankId: account.bankId,
+          bankName: account.bankName,
+          type: account.type,
+          emoji: account.emoji,
+          interestRate: account.interestRate,
+        );
     Navigator.pop(context);
   }
 
