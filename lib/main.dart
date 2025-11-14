@@ -39,14 +39,14 @@ class WalletWiseApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(
-          create: (_) =>
-              AccountProvider()..init(), // Initialize accounts after app starts
+          create: (_) => AccountProvider()..init(),
         ),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: MaterialApp(
         title: 'WalletWise',
+        debugShowCheckedModeBanner: false, // Add this to remove DEBUG banner
         theme: ThemeData(
           useMaterial3: true,
           primaryColor: AppColors.primary,

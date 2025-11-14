@@ -1,160 +1,147 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthProvider extends ChangeNotifier {
-  bool _isLoggedIn = false;
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  User? _user;
   bool _isLoading = false;
   String? _errorMessage;
-  String? _currentEmail;
 
-  late Box<Map> _usersBox;
-  bool _boxInitialized = false;
-
-  // Store users in memory for quick lookup
-  static final Map<String, String> _mockUsers = {};
-
-  bool get isLoggedIn => _isLoggedIn;
+  // Getters
+  User? get user => _user;
+  User? get currentUser => _user;
+  bool get isLoggedIn => _user != null;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String? get currentEmail => _currentEmail;
 
   AuthProvider() {
-    _initializeHive();
+    _checkAuthState();
   }
 
-  Future<void> _initializeHive() async {
-    try {
-      _usersBox = await Hive.openBox<Map>('users');
-      _boxInitialized = true;
-
-      // ✅ LOAD USERS FROM HIVE WHEN APP STARTS
-      _loadUsersFromHive();
-
+  void _checkAuthState() {
+    _firebaseAuth.authStateChanges().listen((User? user) {
+      _user = user;
       notifyListeners();
-    } catch (e) {
-      print('Error initializing Hive: $e');
-    }
+    });
   }
 
-  // ✅ THIS METHOD WAS MISSING!
-  void _loadUsersFromHive() {
+  // LOGIN - matches what login_screen expects
+  Future<bool> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
     try {
-      _mockUsers.clear(); // Clear first
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
 
-      for (var key in _usersBox.keys) {
-        final userData = _usersBox.get(key);
-        if (userData != null) {
-          final email = userData['email'] as String;
-          final password = userData['password'] as String;
-          _mockUsers[email] = password;
-        }
-      }
+      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      print(
-          '✅ Loaded ${_mockUsers.length} users from Hive: ${_mockUsers.keys.toList()}');
-    } catch (e) {
-      print('❌ Error loading users from Hive: $e');
-    }
-  }
-
-  Future<bool> signUpWithEmail(
-      String email, String password, String name) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      // Wait for Hive to initialize
-      if (!_boxInitialized) {
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Check if email already exists
-      if (_usersBox.containsKey(email)) {
-        throw Exception('Email already in use');
-      }
-
-      // Save user to Hive
-      _usersBox.put(email, {
-        'email': email,
-        'password': password,
-        'name': name,
-        'createdAt': DateTime.now().toString(),
-      });
-
-      // Also save to memory
-      _mockUsers[email] = password;
-
-      _isLoggedIn = true;
-      _currentEmail = email;
+      _user = userCredential.user;
       _isLoading = false;
       notifyListeners();
-
-      print('✅ SignUp successful: $email');
       return true;
-    } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+    } on FirebaseAuthException catch (e) {
       _isLoading = false;
+      _errorMessage = e.message ?? 'Login failed';
       notifyListeners();
-      print('❌ SignUp Error: $_errorMessage');
       return false;
     }
   }
 
-  Future<bool> loginWithEmail(String email, String password) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
+  // SIGNUP - matches what signup_screen expects
+  Future<bool> signUpWithEmail({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
     try {
-      // Wait for Hive to initialize
-      if (!_boxInitialized) {
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-
-      await Future.delayed(const Duration(seconds: 1));
-
-      print('🔍 Attempting login with: $email');
-      print('📦 Available users in memory: ${_mockUsers.keys.toList()}');
-
-      // Check if email exists (uses memory cache)
-      if (!_mockUsers.containsKey(email)) {
-        throw Exception('Email not found');
-      }
-
-      // Check password
-      if (_mockUsers[email] != password) {
-        throw Exception('Wrong password');
-      }
-
-      // ✅ SET LOGIN STATE
-      _isLoggedIn = true;
-      _currentEmail = email;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
       notifyListeners();
 
-      print('✅ Login successful: $email');
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      await userCredential.user?.updateDisplayName(displayName);
+      _user = userCredential.user;
+
+      _isLoading = false;
+      notifyListeners();
       return true;
-    } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+    } on FirebaseAuthException catch (e) {
       _isLoading = false;
+      _errorMessage = e.message ?? 'Signup failed';
       notifyListeners();
-      print('❌ Login Error: $_errorMessage');
       return false;
     }
+  }
+
+  // Also keep these for compatibility
+  Future<void> signup({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    await signUpWithEmail(
+      email: email,
+      password: password,
+      displayName: displayName,
+    );
+  }
+
+  Future<void> login({
+    required String email,
+    required String password,
+  }) async {
+    await loginWithEmail(
+      email: email,
+      password: password,
+    );
   }
 
   Future<void> logout() async {
-    _isLoggedIn = false;
-    _currentEmail = null;
-    notifyListeners();
-    print('✅ Logged out');
+    try {
+      await _firebaseAuth.signOut();
+      _user = null;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Logout failed: $e';
+      notifyListeners();
+    }
   }
 
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
+  Future<void> resetPassword(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = e.message ?? 'Password reset failed';
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateProfile({
+    String? displayName,
+    String? photoURL,
+  }) async {
+    try {
+      if (displayName != null) {
+        await _user?.updateDisplayName(displayName);
+      }
+      if (photoURL != null) {
+        await _user?.updatePhotoURL(photoURL);
+      }
+      _user = _firebaseAuth.currentUser;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Update profile failed: $e';
+      notifyListeners();
+    }
   }
 }

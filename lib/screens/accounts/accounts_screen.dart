@@ -20,6 +20,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
       appBar: AppBar(
         title: const Text('Accounts'),
         elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: Consumer<AccountProvider>(
         builder: (context, accountProvider, _) {
@@ -53,7 +54,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Accounts List
+              // Accounts List with bottom padding
               Expanded(
                 child: accountProvider.filteredAccounts.isEmpty
                     ? Center(
@@ -97,7 +98,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.fromLTRB(
+                            16, 0, 16, 100), // Added 100 bottom padding
                         itemCount: accountProvider.filteredAccounts.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
@@ -114,16 +116,22 @@ class _AccountsScreenState extends State<AccountsScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const AddAccountScreen(),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
+      // Move FAB above navbar with proper positioning
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 90), // Position above navbar
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AddAccountScreen(),
+              ),
+            );
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add),
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

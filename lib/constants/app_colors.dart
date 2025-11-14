@@ -1,28 +1,67 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF3B82F6);
-  static const Color primaryDark = Color(0xFF2563EB);
-  static const Color primaryLight = Color(0xFFDEEDFF);
+  // Primary Brand Colors
+  static const Color primary = Color(0xFF6C5CE7); // Purple
+  static const Color primaryLight = Color(0xFF8E7EF5); // Light Purple
+  static const Color secondary = Color(0xFF00B894); // Green
+  static const Color accent = Color(0xFFFF6B6B); // Red
+  static const Color danger = Color(0xFFFF6B6B); // Red (Error/Danger)
 
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color danger = Color(0xFFEF4444);
+  // Gradient Colors
+  static const List<Color> primaryGradient = [
+    Color(0xFF6C5CE7),
+    Color(0xFF8E7EF5),
+  ];
 
-  static const Color background = Color(0xFFF9FAFB);
+  static const List<Color> successGradient = [
+    Color(0xFF00B894),
+    Color(0xFF00D2A7),
+  ];
+
+  static const List<Color> warningGradient = [
+    Color(0xFFFD79A8),
+    Color(0xFFFF9FF3),
+  ];
+
+  static const List<Color> infoGradient = [
+    Color(0xFF74B9FF),
+    Color(0xFF0984E3),
+  ];
+
+  // Background Colors
+  static const Color background = Color(0xFFF8F9FA);
   static const Color cardBg = Color(0xFFFFFFFF);
+  static const Color darkBg = Color(0xFF1E1E2E);
+  static const Color darkCard = Color(0xFF2D2D44);
 
-  static const Color textPrimary = Color(0xFF111827);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textTertiary = Color(0xFF9CA3AF);
+  // Text Colors
+  static const Color textPrimary = Color(0xFF2D3436);
+  static const Color textSecondary = Color(0xFF636E72);
+  static const Color textTertiary = Color(0xFFB2BEC3);
+  static const Color textWhite = Color(0xFFFFFFFF);
 
-  static const Color border = Color(0xFFE5E7EB);
-  static const Color divider = Color(0xFFF3F4F6);
+  // Functional Colors
+  static const Color success = Color(0xFF00B894);
+  static const Color error = Color(0xFFFF6B6B);
+  static const Color warning = Color(0xFFFDCB6E);
+  static const Color info = Color(0xFF74B9FF);
 
-  // Account type colors
-  static const Color walletColor = Color(0xFF8B5CF6);
-  static const Color savingsColor = Color(0xFF06B6D4);
-  static const Color creditColor = Color(0xFFF43F5E);
-  static const Color investmentColor = Color(0xFF14B8A6);
-  static const Color goalsColor = Color(0xFFEAB308);
+  // Border & Divider
+  static const Color border = Color(0xFFDFE6E9);
+  static const Color divider = Color(0xFFECF0F1);
+
+  // Shadows
+  static Color shadowLight = Colors.black.withOpacity(0.05);
+  static Color shadowMedium = Colors.black.withOpacity(0.1);
+  static Color shadowDark = Colors.black.withOpacity(0.15);
+
+  // Account Type Colors
+  static const Map<String, Color> accountTypeColors = {
+    'Wallet': Color(0xFF6C5CE7),
+    'Savings': Color(0xFF00B894),
+    'Credit': Color(0xFFFF6B6B),
+    'Investment': Color(0xFF74B9FF),
+    'Loan': Color(0xFFFDCB6E),
+  };
 }
