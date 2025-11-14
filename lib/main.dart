@@ -53,12 +53,12 @@ class WalletWiseApp extends StatelessWidget {
         // Auth Provider - for user authentication
         ChangeNotifierProvider(create: (_) => AuthProvider()),
 
-        // Account Provider - for managing bank accounts
+        // Account Provider - initialize and load data
         ChangeNotifierProvider(
           create: (_) => AccountProvider()..init(),
         ),
 
-        // Transaction Provider - for income/expense tracking
+        // Transaction Provider - initialize and load data
         ChangeNotifierProvider(
           create: (_) => TransactionProvider(),
         ),
@@ -91,6 +91,11 @@ class WalletWiseApp extends StatelessWidget {
 
             // Show dashboard if logged in
             if (authProvider.isLoggedIn) {
+              // Reload data when user logs in
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.read<AccountProvider>().notifyListeners();
+                context.read<TransactionProvider>().notifyListeners();
+              });
               return const DashboardScreen();
             }
 
