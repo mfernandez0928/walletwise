@@ -10,6 +10,8 @@ import '../../widgets/modern_card.dart';
 import '../accounts/accounts_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../models/transaction_model.dart';
+import '../transactions/add_transaction_screen.dart';
+import '../finsights/finsights_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -427,10 +429,10 @@ class _ModernDashboardPage extends StatelessWidget {
           label: 'Receive',
           gradient: AppColors.successGradient,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Receive feature coming soon'),
-                behavior: SnackBarBehavior.floating,
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AddTransactionScreen(),
               ),
             );
           },
@@ -440,10 +442,10 @@ class _ModernDashboardPage extends StatelessWidget {
           label: 'More',
           gradient: AppColors.infoGradient,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('More options coming soon'),
-                behavior: SnackBarBehavior.floating,
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const FinSightsScreen(),
               ),
             );
           },
