@@ -7,7 +7,7 @@ import 'constants/app_colors.dart';
 import 'providers/auth_provider.dart';
 import 'providers/account_provider.dart';
 import 'providers/expense_provider.dart';
-import 'providers/transaction_provider.dart'; // Add this
+import 'providers/transaction_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -17,16 +17,28 @@ import 'screens/dashboard/dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize Hive FIRST
-  await Hive.initFlutter();
+  try {
+    // 1. Initialize Hive FIRST
+    print('🔄 Initializing Hive...');
+    await Hive.initFlutter();
+    print('✓ Hive initialized successfully');
 
-  // 2. Initialize Firebase SECOND
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+    // 2. Initialize Firebase SECOND
+    print('🔄 Initializing Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✓ Firebase initialized successfully');
 
-  // 3. Initialize Currency Converter with real-time rates THIRD
-  await CurrencyConverter.initialize();
+    // 3. Initialize Currency Converter with real-time rates THIRD
+    print('🔄 Initializing Currency Converter...');
+    await CurrencyConverter.initialize();
+    print('✓ Currency Converter initialized successfully');
+
+    print('✓ All services initialized. Starting app...');
+  } catch (e) {
+    print('✗ Initialization error: $e');
+  }
 
   runApp(const WalletWiseApp());
 }
@@ -38,13 +50,23 @@ class WalletWiseApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Auth Provider - for user authentication
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+
+        // Account Provider - for managing bank accounts
         ChangeNotifierProvider(
           create: (_) => AccountProvider()..init(),
         ),
+
+        // Transaction Provider - for income/expense tracking
         ChangeNotifierProvider(
-            create: (_) => TransactionProvider()), // Add this
+          create: (_) => TransactionProvider(),
+        ),
+
+        // Expense Provider - for monthly expense tracking
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+
+        // Theme Provider - for app theme management
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: MaterialApp(
@@ -54,6 +76,11 @@ class WalletWiseApp extends StatelessWidget {
           useMaterial3: true,
           primaryColor: AppColors.primary,
           scaffoldBackgroundColor: AppColors.background,
+          appBarTheme: AppBarTheme(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            iconTheme: const IconThemeData(color: AppColors.primary),
+          ),
         ),
         home: Consumer<AuthProvider>(
           builder: (context, authProvider, _) {

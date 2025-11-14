@@ -152,6 +152,74 @@ class AccountProvider extends ChangeNotifier {
     }
   }
 
+  // ✅ NEW: Update account balance (for transactions)
+  Future<void> updateAccountBalance({
+    required String accountId,
+    required double newBalance,
+  }) async {
+    try {
+      final index = _accounts.indexWhere((a) => a.id == accountId);
+      if (index != -1) {
+        final account = _accounts[index];
+        final updated = account.copyWith(balance: newBalance);
+
+        await _accountsBox.put(accountId, updated.toMap());
+        _accounts[index] = updated;
+
+        print(
+            '✓ Account ${account.name} balance updated: ${account.balance} → $newBalance');
+        notifyListeners();
+      } else {
+        print('✗ Account not found: $accountId');
+      }
+    } catch (e) {
+      print('Error updating account balance: $e');
+    }
+  }
+
+  // ✅ NEW: Add income to account
+  Future<void> addIncome({
+    required String accountId,
+    required double amount,
+  }) async {
+    try {
+      final account = getAccountById(accountId);
+      if (account != null) {
+        await updateAccountBalance(
+          accountId: accountId,
+          newBalance: account.balance + amount,
+        );
+        print('✓ Income added: ₱$amount');
+      }
+    } catch (e) {
+      print('Error adding income: $e');
+    }
+  }
+
+  // ✅ NEW: Deduct expense from account
+  Future<void> addExpense({
+    required String accountId,
+    required double amount,
+  }) async {
+    try {
+      final account = getAccountById(accountId);
+      if (account != null) {
+        final newBalance = account.balance - amount;
+        if (newBalance >= 0) {
+          await updateAccountBalance(
+            accountId: accountId,
+            newBalance: newBalance,
+          );
+          print('✓ Expense deducted: ₱$amount');
+        } else {
+          print('✗ Insufficient balance. Available: ${account.balance}');
+        }
+      }
+    } catch (e) {
+      print('Error adding expense: $e');
+    }
+  }
+
   Future<void> deleteAccount(String id) async {
     try {
       await _accountsBox.delete(id);

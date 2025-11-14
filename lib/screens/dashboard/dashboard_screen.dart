@@ -12,6 +12,7 @@ import '../settings/settings_screen.dart';
 import '../../models/transaction_model.dart';
 import '../transactions/add_transaction_screen.dart';
 import '../finsights/finsights_screen.dart';
+import '../transactions/transactions_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -715,7 +716,12 @@ class _ModernDashboardPage extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Navigate to full transactions screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TransactionsScreen(),
+                      ),
+                    );
                   },
                   child: const Text('View All'),
                 ),
