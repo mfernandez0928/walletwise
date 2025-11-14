@@ -696,8 +696,8 @@ class _ModernDashboardPage extends StatelessWidget {
   }
 
   static Widget _buildRecentTransactions(BuildContext context) {
-    return Consumer<TransactionProvider>(
-      builder: (context, transactionProvider, _) {
+    return Consumer2<TransactionProvider, AccountProvider>(
+      builder: (context, transactionProvider, accountProvider, _) {
         final transactions = transactionProvider.recentTransactions;
 
         return Column(
@@ -742,85 +742,106 @@ class _ModernDashboardPage extends StatelessWidget {
                 ),
               )
             else
-              ...transactions.map((transaction) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: transaction.type == TransactionType.income
-                                  ? AppColors.success.withOpacity(0.1)
-                                  : AppColors.error.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                              child: Text(
-                                transaction.icon ?? '💰',
-                                style: const TextStyle(fontSize: 20),
-                              ),
+              ...transactions.map((transaction) {
+                // Get account to fetch correct currency
+                final account =
+                    accountProvider.getAccountById(transaction.accountId);
+                final currency = account?.currency ?? 'PHP';
+                final symbol = CurrencyConverter.getCurrencySymbol(currency);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: transaction.type == TransactionType.income
+                                ? AppColors.success.withOpacity(0.1)
+                                : AppColors.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              transaction.icon ?? '💰',
+                              style: const TextStyle(fontSize: 20),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  transaction.description,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  transaction.source ?? transaction.category,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${transaction.type == TransactionType.income ? '+' : '-'}₱${transaction.amount.toStringAsFixed(2)}',
-                                style: TextStyle(
+                                transaction.description,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
-                                  color:
-                                      transaction.type == TransactionType.income
-                                          ? AppColors.success
-                                          : AppColors.error,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${transaction.date.month}/${transaction.date.day}',
+                                transaction.source ?? transaction.category,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            // Display with correct currency symbol
+                            Text(
+                              '${transaction.type == TransactionType.income ? '+' : '-'}$symbol${transaction.amount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color:
+                                    transaction.type == TransactionType.income
+                                        ? AppColors.success
+                                        : AppColors.error,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Display currency code badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.border,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                currency,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  )),
+                  ),
+                );
+              }).toList(),
           ],
         );
       },
