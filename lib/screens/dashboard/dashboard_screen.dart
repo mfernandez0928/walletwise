@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../providers/account_provider.dart';
 import '../../providers/expense_provider.dart';
+import '../../providers/transaction_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/modern_card.dart';
 import '../accounts/accounts_screen.dart';
 import '../settings/settings_screen.dart';
+import '../../models/transaction_model.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -139,6 +141,8 @@ class _ModernDashboardPage extends StatelessWidget {
                           _buildStatsCards(context),
                           const SizedBox(height: 24),
                           _buildRecentAccounts(context),
+                          const SizedBox(height: 24),
+                          _buildRecentTransactions(context),
                         ]),
                       ),
                     ),
@@ -674,6 +678,133 @@ class _ModernDashboardPage extends StatelessWidget {
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.primary,
                                   ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+          ],
+        );
+      },
+    );
+  }
+
+  static Widget _buildRecentTransactions(BuildContext context) {
+    return Consumer<TransactionProvider>(
+      builder: (context, transactionProvider, _) {
+        final transactions = transactionProvider.recentTransactions;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Recent Transactions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to full transactions screen
+                  },
+                  child: const Text('View All'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (transactions.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    'No transactions yet',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              )
+            else
+              ...transactions.map((transaction) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: transaction.type == TransactionType.income
+                                  ? AppColors.success.withOpacity(0.1)
+                                  : AppColors.error.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Text(
+                                transaction.icon ?? '💰',
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  transaction.description,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  transaction.source ?? transaction.category,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${transaction.type == TransactionType.income ? '+' : '-'}₱${transaction.amount.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color:
+                                      transaction.type == TransactionType.income
+                                          ? AppColors.success
+                                          : AppColors.error,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${transaction.date.month}/${transaction.date.day}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ],

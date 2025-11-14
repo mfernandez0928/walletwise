@@ -7,6 +7,7 @@ import 'constants/app_colors.dart';
 import 'providers/auth_provider.dart';
 import 'providers/account_provider.dart';
 import 'providers/expense_provider.dart';
+import 'providers/transaction_provider.dart'; // Add this
 import 'providers/theme_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -41,12 +42,14 @@ class WalletWiseApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => AccountProvider()..init(),
         ),
+        ChangeNotifierProvider(
+            create: (_) => TransactionProvider()), // Add this
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: MaterialApp(
         title: 'WalletWise',
-        debugShowCheckedModeBanner: false, // Add this to remove DEBUG banner
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
           primaryColor: AppColors.primary,
